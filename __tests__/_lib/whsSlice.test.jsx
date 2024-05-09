@@ -1,6 +1,39 @@
 import { render } from "../../node_modules/@testing-library/react";
 import TestComponent from "./TestComponent";
 import { boundStore } from "@_lib/boundStore";
+// mocks
+jest.mock('../../_lib/fileManagementSlice.js', () => {
+	return {
+		fileManagementSlice: (set, get) => ({ })
+	}
+});
+jest.mock('../../_lib/interactionsSlice.js', () => {
+	return {
+		interactionsSlice: (set, get) => ({ })
+	}
+});
+jest.mock('../../_lib/productsSlice.js', () => {
+	return {
+		productsSlice: (set, get) => ({ })
+	}
+});
+jest.mock('../../_lib/shelvesSlice.js', () => {
+	return {
+		shelvesSlice: (set, get) => ({ })
+	}
+});
+
+// errorSlice MOCK
+const setError = jest.fn();
+jest.mock('../../_lib/errorSlice.js', () => {
+	return {
+		errorSlice: (set, get) => ({
+			errorMsg: null,
+			setError: () => {setError()}
+		})
+	}
+});
+//
 
 const initialStoreState = boundStore.getState();
 beforeEach(() => { boundStore.setState(initialStoreState, true); });
@@ -27,7 +60,7 @@ test('whsSlice should set whs name correctly', () => {
 	expect(name).toEqual("MyNewWhs");
 });
 
-test('whsSlice should NOT set whs name if length is > 20', () => { 
+test('whsSlice should NOT set whs name if length is > 20, it should set error', () => { 
 	const selector = (state) => ({
         whsName: state.whsName,
         setWhsName: state.setWhsName
@@ -47,31 +80,10 @@ test('whsSlice should NOT set whs name if length is > 20', () => {
 	render(<TestComponent elements={selector} effect={effect} />);
 
 	expect(name).not.toEqual("supercalifragilistice");
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in setName if length is > 20', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-        setWhsName: state.setWhsName
-    });
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsName("supercalifragilistice");
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set whs name if characters are different from letters, numbers and underscores', () => { 
+test('whsSlice should NOT set whs name if characters are different from letters, numbers and underscores, it should set error', () => { 
 	const selector = (state) => ({
         whsName: state.whsName,
         setWhsName: state.setWhsName
@@ -91,31 +103,10 @@ test('whsSlice should NOT set whs name if characters are different from letters,
 	render(<TestComponent elements={selector} effect={effect} />);
 
 	expect(name).not.toEqual("$hello$");
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in setName if characters are different from letters, numbers and underscores', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-        setWhsName: state.setWhsName
-    });
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsName("$hello$");
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set whs name if name is empty', () => { 
+test('whsSlice should NOT set whs name if name is empty, it should set error', () => { 
 	const selector = (state) => ({
         whsName: state.whsName,
         setWhsName: state.setWhsName
@@ -135,28 +126,7 @@ test('whsSlice should NOT set whs name if name is empty', () => {
 	render(<TestComponent elements={selector} effect={effect} />);
 
 	expect(name).not.toEqual("");
-});
-
-test('whsSlice should set error in setName if name is empty', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-        setWhsName: state.setWhsName
-    });
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsName("");
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
+	expect(setError).toHaveBeenCalled();
 });
 
 test('whsSlice should set polygon correctly', () => { 
@@ -192,7 +162,7 @@ test('whsSlice should set polygon correctly', () => {
 	expect(points).toEqual(newPoints);
 });
 
-test('whsSlice should NOT set polygon if points.length < 3', () => { 
+test('whsSlice should NOT set polygon if points.length < 3, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -221,36 +191,10 @@ test('whsSlice should NOT set polygon if points.length < 3', () => {
 
 	expect(height).not.toEqual(45);
 	expect(points).not.toEqual(newPoints);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set polygon if points.length < 3', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsPolygon: state.setWhsPolygon
-    });
-
-	const newPoints = [
-		{ x: 220, z: 10 },
-		{ x: 300, z: 210 }
-	];
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsPolygon(newPoints, 45);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set polygon if depth > 1000', () => { 
+test('whsSlice should NOT set polygon if depth > 1000, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -280,37 +224,10 @@ test('whsSlice should NOT set polygon if depth > 1000', () => {
 	
 	expect(height).not.toEqual(12);
 	expect(points).not.toEqual(newPoints);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set polygon if depth > 1000', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsPolygon: state.setWhsPolygon
-    });
-
-	const newPoints = [
-		{ x: 0, z: 50 },
-		{ x: 100, z: 0 },
-		{ x: 250, z: 1001}
-	];
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsPolygon(newPoints, 22);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set polygon if width > 1000', () => { 
+test('whsSlice should NOT set polygon if width > 1000, it should set error', () => {
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -340,37 +257,10 @@ test('whsSlice should NOT set polygon if width > 1000', () => {
 	
 	expect(height).not.toEqual(27);
 	expect(points).not.toEqual(newPoints);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set polygon if width > 1000', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsPolygon: state.setWhsPolygon
-    });
-
-	const newPoints = [
-		{ x: 0, z: 50 },
-		{ x: 1001, z: 0 },
-		{ x: 250, z: 100}
-	];
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsPolygon(newPoints, 22);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set polygon if height > 50', () => { 
+test('whsSlice should NOT set polygon if height > 50, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -400,37 +290,10 @@ test('whsSlice should NOT set polygon if height > 50', () => {
 	
 	expect(height).not.toEqual(51);
 	expect(points).not.toEqual(newPoints);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set polygon if height > 50', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsPolygon: state.setWhsPolygon
-    });
-
-	const newPoints = [
-		{ x: 0, z: 50 },
-		{ x: 102, z: 0 },
-		{ x: 250, z: 100}
-	];
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsPolygon(newPoints, 52);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set polygon if width < 0.01 ', () => { 
+test('whsSlice should NOT set polygon if width < 0.01, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -460,37 +323,10 @@ test('whsSlice should NOT set polygon if width < 0.01 ', () => {
 	
 	expect(height).not.toEqual(4);
 	expect(points).not.toEqual(newPoints);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set polygon if width < 0.01', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsPolygon: state.setWhsPolygon
-    });
-
-	const newPoints = [
-		{ x: 0, z: 50 },
-		{ x: 0.002, z: 0 },
-		{ x: 0.00003, z: 100}
-	];
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsPolygon(newPoints, 10);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set polygon if depth < 0.01 ', () => { 
+test('whsSlice should NOT set polygon if depth < 0.01, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -520,37 +356,10 @@ test('whsSlice should NOT set polygon if depth < 0.01 ', () => {
 	
 	expect(height).not.toEqual(48);
 	expect(points).not.toEqual(newPoints);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set polygon if depth < 0.01', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsPolygon: state.setWhsPolygon
-    });
-
-	const newPoints = [
-		{ x: 0, z: 0 },
-		{ x: 50, z: 0.001 },
-		{ x: 120, z: 0.0002}
-	];
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsPolygon(newPoints, 22);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set polygon if height < 0.01 ', () => { 
+test('whsSlice should NOT set polygon if height < 0.01, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -580,34 +389,7 @@ test('whsSlice should NOT set polygon if height < 0.01 ', () => {
 	
 	expect(height).not.toEqual(0.000000000007);
 	expect(points).not.toEqual(newPoints);
-});
-
-test('whsSlice should set error in set polygon if height < 0.01', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsPolygon: state.setWhsPolygon
-    });
-
-	const newPoints = [
-		{ x: 0, z: 0 },
-		{ x: 50, z: 55 },
-		{ x: 120, z: 100}
-	];
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsPolygon(newPoints, 0.0002);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
+	expect(setError).toHaveBeenCalled();
 });
 
 test('whsSlice should set rectangle correctly', () => { 
@@ -639,7 +421,7 @@ test('whsSlice should set rectangle correctly', () => {
 	expect(points).toContainEqual({x: -10, z: -20});
 });
 
-test('whsSlice should NOT set rectangle if width is empty', () => { 
+test('whsSlice should NOT set rectangle if width is empty, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -663,31 +445,10 @@ test('whsSlice should NOT set rectangle if width is empty', () => {
 
 	expect(height).not.toEqual(10);
 	expect(points.length).toEqual(0);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set rectangle if width is empty', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsRectangle: state.setWhsRectangle
-    });
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsRectangle(40, null, 10);
-            firstRender = false;
-        }
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set rectangle if depth is empty', () => { 
+test('whsSlice should NOT set rectangle if depth is empty, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -711,31 +472,10 @@ test('whsSlice should NOT set rectangle if depth is empty', () => {
 
 	expect(height).not.toEqual(10);
 	expect(points.length).toEqual(0);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set rectangle if depth is empty', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsRectangle: state.setWhsRectangle
-    });
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsRectangle(null, 20, 10);
-            firstRender = false;
-        }
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set rectangle if height is empty', () => { 
+test('whsSlice should NOT set rectangle if height is empty, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -758,31 +498,10 @@ test('whsSlice should NOT set rectangle if height is empty', () => {
 	render(<TestComponent elements={selector} effect={effect} />);
 
 	expect(points.length).toEqual(0);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set rectangle if height is empty', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsRectangle: state.setWhsRectangle
-    });
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsRectangle(40, 20, null);
-            firstRender = false;
-        }
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set rectangle if depth > 1000', () => { 
+test('whsSlice should NOT set rectangle if depth > 1000, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -806,31 +525,10 @@ test('whsSlice should NOT set rectangle if depth > 1000', () => {
 	
 	expect(height).not.toEqual(10);
 	expect(points.length).toEqual(0);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set rectangle if depth > 1000', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsRectangle: state.setWhsRectangle
-    });
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsRectangle(1001, 20, 10);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-	
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set rectangle if width > 1000', () => { 
+test('whsSlice should NOT set rectangle if width > 1000, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -854,31 +552,10 @@ test('whsSlice should NOT set rectangle if width > 1000', () => {
 	
 	expect(height).not.toEqual(10);
 	expect(points.length).toEqual(0);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set rectangle if width > 1000', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsRectangle: state.setWhsRectangle
-    });
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsRectangle(20, 1001, 10);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-	
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set rectangle if heigth > 1000', () => { 
+test('whsSlice should NOT set rectangle if heigth > 1000, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -902,31 +579,10 @@ test('whsSlice should NOT set rectangle if heigth > 1000', () => {
 	
 	expect(height).not.toEqual(51);
 	expect(points.length).toEqual(0);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set rectangle if height > 1000', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsRectangle: state.setWhsRectangle
-    });
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsRectangle(20, 40, 51);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-	
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set rectangle if width < 0.01 ', () => { 
+test('whsSlice should NOT set rectangle if width < 0.01, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -950,31 +606,10 @@ test('whsSlice should NOT set rectangle if width < 0.01 ', () => {
 	
 	expect(height).not.toEqual(10);
 	expect(points.length).toEqual(0);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set rectangle if width < 0.01', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsRectangle: state.setWhsRectangle
-    });
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsRectangle(40, 0.0002, 10);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-	
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set rectangle if depth < 0.01 ', () => { 
+test('whsSlice should NOT set rectangle if depth < 0.01, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -998,31 +633,10 @@ test('whsSlice should NOT set rectangle if depth < 0.01 ', () => {
 	
 	expect(height).not.toEqual(10);
 	expect(points.length).toEqual(0);
+	expect(setError).toHaveBeenCalled();
 });
 
-test('whsSlice should set error in set rectangle if depth < 0.01', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsRectangle: state.setWhsRectangle
-    });
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsRectangle(-80, 40, 10);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-	
-	expect(errorMsg).not.toEqual(null);
-});
-
-test('whsSlice should NOT set rectangle if height < 0.01 ', () => { 
+test('whsSlice should NOT set rectangle if height < 0.01, it should set error', () => { 
 	const selector = (state) => ({
         whsHeight: state.whsHeight,
         points: state.points,
@@ -1046,26 +660,5 @@ test('whsSlice should NOT set rectangle if height < 0.01 ', () => {
 	
 	expect(height).not.toEqual(0.00005);
 	expect(points.length).toEqual(0);
-});
-
-test('whsSlice should set error in set rectangle if height < 0.01', () => { 
-	const selector = (state) => ({
-        errorMsg: state.errorMsg,
-		setWhsRectangle: state.setWhsRectangle
-    });
-
-	let firstRender = true;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setWhsRectangle(20, 40, 0.0099999999);
-            firstRender = false;
-        }        
-    });
-
-	render(<TestComponent elements={selector} effect={effect} />);
-	
-	expect(errorMsg).not.toEqual(null);
+	expect(setError).toHaveBeenCalled();
 });

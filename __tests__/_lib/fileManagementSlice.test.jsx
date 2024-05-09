@@ -5,10 +5,18 @@ import { boundStore } from "@_lib/boundStore";
 import Product from "@_model/Product";
 import Movement from "@_model/Movement";
 import { binState } from "@_model/Bin";
+// mocks
+jest.mock('../../_lib/errorSlice.js', () => {
+	return {
+		errorSlice: (set, get) => ({ })
+	}
+});
+//
 
 const initialStoreState = boundStore.getState();
 beforeEach(() => { boundStore.setState(initialStoreState, true); });
 
+// TEST DI INTEGRAZIONE: fileManagementSlice + (interactionsSlice, productsSlice, shelvesSlice, whsSlice)
 test('fileManagementSlice should interpret SVG points correctly', () => { 
     const selector = (state) => ({
         points: state.points,

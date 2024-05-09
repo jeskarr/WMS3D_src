@@ -4,8 +4,6 @@ import { render, fireEvent } from '../../../node_modules/@testing-library/react'
 import "../../../node_modules/@testing-library/jest-dom";
 import "@__mocks__/matchMedia.mock";
 import { waitFor } from "../../../node_modules/@testing-library/react";
-import { Extrude } from '../../../node_modules/@react-three/drei';
-import * as Three from 'three';
 
 let mockData = {};
 

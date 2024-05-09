@@ -1,9 +1,147 @@
 import { render } from "../../node_modules/@testing-library/react";
 import TestComponent from "./TestComponent";
 import { boundStore } from "@_lib/boundStore";
-import { binState } from "@_model/Bin";
 import Movement from "@_model/Movement";
-import Shelf from "@_model/Shelf";
+// mocks
+jest.mock('../../_lib/fileManagementSlice.js', () => {
+	return {
+		fileManagementSlice: (set, get) => ({ })
+	}
+});
+jest.mock('../../_lib/productsSlice.js', () => {
+	return {
+		productsSlice: (set, get) => ({ })
+	}
+});
+jest.mock('../../_lib/whsSlice.js', () => {
+	return {
+		whsSlice: (set, get) => ({ })
+	}
+});
+
+// binState MOCK
+jest.mock('../../_model/Bin.js', () => {
+	return {
+		binState: {
+            EMPTY: "EMPTY",
+            STILL: "STILL",
+            INCOMING: "INCOMING",
+            OUTGOING: "OUTGOING"
+        }
+	}
+});
+
+// shelvesSlice MOCK
+const removeProductFromBin = jest.fn();
+jest.mock('../../_lib/shelvesSlice.js', () => {
+    const shelves = [
+        {
+            id: "fromShelfID",
+            name: "fromShelf",
+            binSize: 4,
+            width: 3,
+            height: 2,
+            isFlipped: true,
+            position: {
+                x: 4,
+                y: 5,
+                z: 7
+            },
+            bins: [
+                [
+                    {
+                        id: "fromShelfID+0+0",
+                        productId: "myProductId",
+                        state: "STILL"
+                    },
+                    {
+                        id: "fromShelfID+0+1",
+                        productId: null,
+                        state: "EMPTY"
+                    },
+                    {
+                        id: "fromShelfID+0+2",
+                        productId: null,
+                        state: "EMPTY"
+                    }
+                ],
+                [
+                    {
+                        id: "fromShelfID+1+0",
+                        productId: null,
+                        state: "EMPTY"
+                    },
+                    {
+                        id: "fromShelfID+1+1",
+                        productId: null,
+                        state: "EMPTY"
+                    },
+                    {
+                        id: "fromShelfID+1+2",
+                        productId: "outGoingProd",
+                        state: "OUTGOING"
+                    }
+                ]
+            ]
+        },
+        {
+            id: "toShelfID",
+            name: "toShelf",
+            binSize: 6,
+            width: 1,
+            height: 3,
+            isFlipped: false,
+            position: {
+                x: 5,
+                y: 20,
+                z: 10
+            },
+            bins: [
+                [
+                    {
+                        id: "toShelfID+0+0",
+                        productId: null,
+                        state: "EMPTY"
+                    }
+                ],
+                [
+                    {
+                        id: "toShelfID+1+0",
+                        productId: null,
+                        state: "EMPTY"
+                    }
+                ],
+                [
+                    {
+                        id: "toShelfID+2+0",
+                        productId: "someOtherProduct",
+                        state: "STILL"
+                    }
+                ]
+            ]
+        }
+    ];
+	return {
+		shelvesSlice: (set, get) => ({
+			shelves: shelves,
+            updateBinState: jest.fn(),
+            insertProduct: jest.fn(),
+            removeProductFromBin: (idShelf, row, col) => removeProductFromBin(idShelf, row, col)
+		})
+	}
+});
+
+// errorSlice MOCK
+const setError = jest.fn();
+jest.mock('../../_lib/errorSlice.js', () => {
+	return {
+		errorSlice: (set, get) => ({
+			errorMsg: null,
+			setError: () => {setError()}
+		})
+	}
+});
+//
 
 const initialStoreState = boundStore.getState();
 beforeEach(() => { boundStore.setState(initialStoreState, true); });
@@ -85,19 +223,15 @@ test('interactionsSlice with selectShelf should deselect selectedBin', () => {
     });
 
 	let firstRender = true;
-    let secondRender = false;
 	let selectedBin = '';
 	effect = jest.fn((items) => {
         selectedBin = items.selectedBin;
 
         if(firstRender) {
             items.selectBin("myBinId");
-            firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
             items.selectShelf("myShelfId");
-            secondRender = false;
-        }       
+            firstRender = false;
+        }      
     });
 
 	render(<TestComponent elements={selector} effect={effect} />);
@@ -113,19 +247,15 @@ test('interactionsSlice with selectShelf should deselect selectedProduct', () =>
     });
 
 	let firstRender = true;
-    let secondRender = false;
 	let selectedProduct = '';
 	effect = jest.fn((items) => {
         selectedProduct = items.selectedProduct;
 
         if(firstRender) {
             items.selectProduct("myProductId");
-            firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
             items.selectShelf("myShelfId");
-            secondRender = false;
-        }       
+            firstRender = false;
+        }      
     });
 
 	render(<TestComponent elements={selector} effect={effect} />);
@@ -164,19 +294,15 @@ test('interactionsSlice with selectProduct should deselect selectedBin', () => {
     });
 
 	let firstRender = true;
-    let secondRender = false;
 	let selectedBin = '';
 	effect = jest.fn((items) => {
         selectedBin = items.selectedBin;
 
         if(firstRender) {
             items.selectBin("myBinId");
-            firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
             items.selectProduct("myProductId");
-            secondRender = false;
-        }       
+            firstRender = false;
+        }     
     });
 
 	render(<TestComponent elements={selector} effect={effect} />);
@@ -192,18 +318,14 @@ test('interactionsSlice with selectProduct should deselect selectedShelf', () =>
     });
 
 	let firstRender = true;
-    let secondRender = false;
 	let selectedShelf = '';
 	effect = jest.fn((items) => {
         selectedShelf = items.selectedShelf;
 
         if(firstRender) {
             items.selectShelf("myShelfId");
-            firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
             items.selectProduct("myProductId");
-            secondRender = false;
+            firstRender = false;
         }       
     });
 
@@ -243,19 +365,15 @@ test('interactionsSlice with selectBin should deselect selectedProduct', () => {
     });
 
 	let firstRender = true;
-    let secondRender = false;
 	let selectedProduct = '';
 	effect = jest.fn((items) => {
         selectedProduct = items.selectedProduct;
 
         if(firstRender) {
             items.selectProduct("myProductId");
-            firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
             items.selectBin("myBinId");
-            secondRender = false;
-        }       
+            firstRender = false;
+        }      
     });
 
 	render(<TestComponent elements={selector} effect={effect} />);
@@ -271,19 +389,15 @@ test('interactionsSlice with selectBin should deselect selectedShelf', () => {
     });
 
 	let firstRender = true;
-    let secondRender = false;
 	let selectedShelf = '';
 	effect = jest.fn((items) => {
         selectedShelf = items.selectedShelf;
 
         if(firstRender) {
             items.selectShelf("myShelfId");
-            firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
             items.selectBin("myBinId");
-            secondRender = false;
-        }       
+            firstRender = false;
+        }     
     });
 
 	render(<TestComponent elements={selector} effect={effect} />);
@@ -316,34 +430,22 @@ test('interactionsSlice should set movements correctly', () => {
 });
 
 test('interactionsSlice should order movement correctly', () => {
-    const shelves = [
-        new Shelf("fromShelf", 4, 4, 6, {x: 1, y: 2, z: 3}, true, "fromShelf"),
-        new Shelf("toShelf", 2, 7, 2, {x: 10, y: 2, z: 3}, false, "toShelf")
-    ];
-    shelves[0].bins[0][0].state = binState.STILL;
-    
     const selector = (state) => ({
-        setShelves: state.setShelves,
         selectBin: state.selectBin,
         orderMovementFromSelected: state.orderMovementFromSelected,
         movements: state.movements
     });
 
     let firstRender = true;
-    let secondRender = false;
 	let movements = null;
 	effect = jest.fn((items) => {
         movements = items.movements;
 
         if(firstRender) {
-            items.setShelves(shelves);
-            items.selectBin("fromShelf+0+0");
+            items.selectBin("fromShelfID+0+0");
+            items.orderMovementFromSelected("toShelfID", 1, 0);
             firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
-            items.orderMovementFromSelected("toShelf", 1, 6);
-            secondRender = false;
-        }       
+        }      
     });
 
     render(<TestComponent elements={selector} effect={effect} />);
@@ -351,12 +453,12 @@ test('interactionsSlice should order movement correctly', () => {
     let foundMovement = false;
     for (let index = 0; index < movements.length; index++) {
         if(
-            movements[index].fromId === "fromShelf" &&
+            movements[index].fromId === "fromShelfID" &&
             movements[index].fromRow === 0 &&
             movements[index].fromCol === 0 &&
-            movements[index].toId === "toShelf" &&
+            movements[index].toId === "toShelfID" &&
             movements[index].toRow === 1 &&
-            movements[index].toCol === 6
+            movements[index].toCol === 0
         ) foundMovement = true;    
     }
 
@@ -364,35 +466,22 @@ test('interactionsSlice should order movement correctly', () => {
 });
 
 test('interactionsSlice should order movement only if destination bin is empty', () => {
-    const shelves = [
-        new Shelf("fromShelf", 4, 4, 6, {x: 1, y: 2, z: 3}, true, "fromShelf"),
-        new Shelf("toShelf", 2, 7, 2, {x: 10, y: 2, z: 3}, false, "toShelf")
-    ];
-    shelves[1].bins[1][6].state = binState.STILL;
-    shelves[0].bins[1][2].state = binState.STILL;
-    
     const selector = (state) => ({
-        setShelves: state.setShelves,
         selectBin: state.selectBin,
         orderMovementFromSelected: state.orderMovementFromSelected,
         movements: state.movements
     });
 
     let firstRender = true;
-    let secondRender = false;
 	let movements = null;
 	effect = jest.fn((items) => {
         movements = items.movements;
 
         if(firstRender) {
-            items.setShelves(shelves);
-            items.selectBin("fromShelf+1+2");
+            items.selectBin("fromShelfID+0+0");
+            items.orderMovementFromSelected("toShelfID", 2, 0);
             firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
-            items.orderMovementFromSelected("toShelf", 1, 6);
-            secondRender = false;
-        }       
+        }     
     });
 
     render(<TestComponent elements={selector} effect={effect} />);
@@ -400,12 +489,12 @@ test('interactionsSlice should order movement only if destination bin is empty',
     let foundMovement = false;
     for (let index = 0; index < movements.length; index++) {
         if(
-            movements[index].fromId === "fromShelf" &&
-            movements[index].fromRow === 1 &&
-            movements[index].fromCol === 2 &&
-            movements[index].toId === "toShelf" &&
-            movements[index].toRow === 1 &&
-            movements[index].toCol === 6
+            movements[index].fromId === "fromShelfID" &&
+            movements[index].fromRow === 0 &&
+            movements[index].fromCol === 0 &&
+            movements[index].toId === "toShelfID" &&
+            movements[index].toRow === 2 &&
+            movements[index].toCol === 0
         ) foundMovement = true;    
     }
 
@@ -413,71 +502,43 @@ test('interactionsSlice should order movement only if destination bin is empty',
 });
 
 test('interactionsSlice should set error in order movement if starting bin is EMPTY', () => {
-    const shelves = [
-        new Shelf("fromShelf", 4, 4, 6, {x: 1, y: 2, z: 3}, true, "fromShelf"),
-        new Shelf("toShelf", 2, 7, 2, {x: 10, y: 2, z: 3}, false, "toShelf")
-    ];
-    shelves[1].bins[1][6].state = binState.STILL;
-    shelves[0].bins[1][2].state = binState.STILL;
-    
     const selector = (state) => ({
-        setShelves: state.setShelves,
         selectBin: state.selectBin,
         orderMovementFromSelected: state.orderMovementFromSelected,
         errorMsg: state.errorMsg
     });
 
     let firstRender = true;
-    let secondRender = false;
-	let errorMsg = null;
 	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
         if(firstRender) {
-            items.setShelves(shelves);
-            items.selectBin("fromShelf+1+2");
+            items.selectBin("fromShelfID+0+1");
+            items.orderMovementFromSelected("toShelfID", 0, 0);
             firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
-            items.orderMovementFromSelected("toShelf", 1, 6);
-            secondRender = false;
         }       
     });
 
     render(<TestComponent elements={selector} effect={effect} />);
 
-    expect(errorMsg).not.toEqual(null);
+    expect(setError).toHaveBeenCalled();
 });
 
-test('interactionsSlice should order movement only from STILL bin', () => {
-    const shelves = [
-        new Shelf("fromShelf", 4, 4, 6, {x: 1, y: 2, z: 3}, true, "fromShelf"),
-        new Shelf("toShelf", 2, 7, 2, {x: 10, y: 2, z: 3}, false, "toShelf")
-    ];
-    shelves[0].bins[1][2].state = binState.OUTGOING;
-    
+test('interactionsSlice should order movement only from STILL bin, it should set error otherwise', () => {
     const selector = (state) => ({
-        setShelves: state.setShelves,
         selectBin: state.selectBin,
         orderMovementFromSelected: state.orderMovementFromSelected,
         movements: state.movements
     });
 
     let firstRender = true;
-    let secondRender = false;
 	let movements = null;
 	effect = jest.fn((items) => {
         movements = items.movements;
 
         if(firstRender) {
-            items.setShelves(shelves);
-            items.selectBin("fromShelf+1+2");
+            items.selectBin("fromShelfID+1+2");
+            items.orderMovementFromSelected("toShelfID", 1, 0);
             firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
-            items.orderMovementFromSelected("toShelf", 1, 6);
-            secondRender = false;
-        }       
+        }      
     });
 
     render(<TestComponent elements={selector} effect={effect} />);
@@ -485,63 +546,21 @@ test('interactionsSlice should order movement only from STILL bin', () => {
     let foundMovement = false;
     for (let index = 0; index < movements.length; index++) {
         if(
-            movements[index].fromId === "fromShelf" &&
+            movements[index].fromId === "fromShelfID" &&
             movements[index].fromRow === 1 &&
             movements[index].fromCol === 2 &&
-            movements[index].toId === "toShelf" &&
+            movements[index].toId === "toShelfID" &&
             movements[index].toRow === 1 &&
-            movements[index].toCol === 6
+            movements[index].toCol === 0
         ) foundMovement = true;    
     }
 
     expect(foundMovement).toEqual(false);
+    expect(setError).toHaveBeenCalled();
 });
 
-test('interactionsSlice should set error in order movement if starting bin is non-STILL', () => {
-    const shelves = [
-        new Shelf("fromShelf", 4, 4, 6, {x: 1, y: 2, z: 3}, true, "fromShelf"),
-        new Shelf("toShelf", 2, 7, 2, {x: 10, y: 2, z: 3}, false, "toShelf")
-    ];
-    shelves[0].bins[1][2].state = binState.OUTGOING;
-    
+test('interactionslice should remove movements involved with specific bin (from bin) and call removeProductFromBin with incoming bin', () => {     
     const selector = (state) => ({
-        setShelves: state.setShelves,
-        selectBin: state.selectBin,
-        orderMovementFromSelected: state.orderMovementFromSelected,
-        errorMsg: state.errorMsg
-    });
-
-    let firstRender = true;
-    let secondRender = false;
-	let errorMsg = null;
-	effect = jest.fn((items) => {
-        errorMsg = items.errorMsg;
-
-        if(firstRender) {
-            items.setShelves(shelves);
-            items.selectBin("fromShelf+1+2");
-            firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
-            items.orderMovementFromSelected("toShelf", 1, 6);
-            secondRender = false;
-        }       
-    });
-
-    render(<TestComponent elements={selector} effect={effect} />);
-
-    expect(errorMsg).not.toEqual(null);
-});
-
-test('interactionslice should remove movements involved with specific bin (from bin)', () => { 
-    const shelves = [
-        new Shelf("fromShelf", 4, 4, 6, {x: 1, y: 2, z: 3}, true, "fromShelf"),
-        new Shelf("toShelf", 2, 7, 2, {x: 10, y: 2, z: 3}, false, "toShelf")
-    ];
-    shelves[0].bins[0][0].state = binState.STILL;
-    
-    const selector = (state) => ({
-        setShelves: state.setShelves,
         selectBin: state.selectBin,
         orderMovementFromSelected: state.orderMovementFromSelected,
         removeMovementsWithBin: state.removeMovementsWithBin,
@@ -549,37 +568,26 @@ test('interactionslice should remove movements involved with specific bin (from 
     });
 
     let firstRender = true;
-    let secondRender = false;
 	let movements = null;
 	effect = jest.fn((items) => {
         movements = items.movements;
 
         if(firstRender) {
-            items.setShelves(shelves);
-            items.selectBin("fromShelf+0+0");
-            items.orderMovementFromSelected("toShelf", 1, 6);
+            items.selectBin("fromShelfID+0+0");
+            items.orderMovementFromSelected("toShelfID", 1, 0);
+            items.removeMovementsWithBin("fromShelfID", 0, 0);
             firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
-            items.removeMovementsWithBin("fromShelf", 0, 0);
-            secondRender = false;
-        }       
+        }      
     });
 
     render(<TestComponent elements={selector} effect={effect} />);
 
     expect(movements.length).toEqual(0);
+    expect(removeProductFromBin).toHaveBeenCalledWith("toShelfID", 1, 0);
 });
 
-test('interactionslice should remove movements involved with specific bin (to bin)', () => { 
-    const shelves = [
-        new Shelf("fromShelf", 4, 4, 6, {x: 1, y: 2, z: 3}, true, "fromShelf"),
-        new Shelf("toShelf", 2, 7, 2, {x: 10, y: 2, z: 3}, false, "toShelf")
-    ];
-    shelves[0].bins[0][0].state = binState.STILL;
-    
+test('interactionslice should remove movements involved with specific bin (to bin) and call removeProductFromBin with outgoing bin', () => { 
     const selector = (state) => ({
-        setShelves: state.setShelves,
         selectBin: state.selectBin,
         orderMovementFromSelected: state.orderMovementFromSelected,
         removeMovementsWithBin: state.removeMovementsWithBin,
@@ -587,24 +595,20 @@ test('interactionslice should remove movements involved with specific bin (to bi
     });
 
     let firstRender = true;
-    let secondRender = false;
 	let movements = null;
 	effect = jest.fn((items) => {
         movements = items.movements;
 
         if(firstRender) {
-            items.setShelves(shelves);
-            items.selectBin("fromShelf+0+0");
-            items.orderMovementFromSelected("toShelf", 1, 6);
+            items.selectBin("fromShelfID+0+0");
+            items.orderMovementFromSelected("toShelfID", 1, 0);
+            items.removeMovementsWithBin("toShelfID", 1, 0);
             firstRender = false;
-            secondRender = true;
-        } else if(secondRender) {
-            items.removeMovementsWithBin("toShelf", 1, 6);
-            secondRender = false;
-        }       
+        }     
     });
 
     render(<TestComponent elements={selector} effect={effect} />);
 
     expect(movements.length).toEqual(0);
+    expect(removeProductFromBin).toHaveBeenCalledWith("fromShelfID", 0, 0);
 });

@@ -10,16 +10,20 @@ export const whsSlice = (set, get) => ({
 	points: [],
 
 	setWhsName: (name) => {
+		let error = false;
 		if(name.length > MAX_NAME_LENGTH) {
-			get().setError("Il nome del magazzino non può superarare i 20 caratteri.")
+			get().setError("Il nome del magazzino non può superarare i 20 caratteri.");
+			error = true;
 		}
 		if(!name.match(/^[a-zA-Z0-9_]+$/)) {
-			get().setError("Il nome del magazzino può contenere solo lettere, numeri e _.")
+			get().setError("Il nome del magazzino può contenere solo lettere, numeri e _.");
+			error = true;
 		}
 		if(!name.trim()) {
-			get().setError("Il nome del magazzino non può essere vuoto.")
+			get().setError("Il nome del magazzino non può essere vuoto.");
+			error = true;
 		}
-		if(!get().errorMsg) {
+		if(!error) {
 			set({ whsName: name });
 		}
 	},
